@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANPR Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #e8eef4; color: #1e3a5f; min-height: 100vh; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 0 24px 24px; }
+        /* Header */
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%); padding: 14px 0; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(30,58,95,0.25); }
+        .header .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .header .title { font-size: 1.35rem; font-weight: 700; color: #fff; }
+        .header .right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .header .btn { padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; color: inherit; }
+        .header .btn-ghost { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+        .header .btn-ghost:hover { background: rgba(255,255,255,0.3); }
+        .header .btn-green { background: #3182ce; color: #fff; }
+        .header .btn-green:hover { background: #2b6cb0; }
+        .header .user { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #fff; }
+        .header .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; }
+        .header .notif { position: relative; padding: 8px; cursor: pointer; }
+        .header .notif .badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: #63b3ed; border-radius: 50%; }
+        /* Summary cards */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(30,58,95,0.08); display: flex; align-items: flex-start; justify-content: space-between; border: 1px solid rgba(49,130,206,0.15); }
+        .card.green { border-left: 4px solid #3182ce; background: linear-gradient(135deg, #ebf8ff 0%, #fff 100%); }
+        .card.orange { border-left: 4px solid #4299e1; background: linear-gradient(135deg, #ebf8ff 0%, #fff 100%); }
+        .card.blue { border-left: 4px solid #2b6cb0; background: linear-gradient(135deg, #bee3f8 0%, #fff 100%); }
+        .card.red { border-left: 4px solid #2c5282; background: linear-gradient(135deg, #e6fffa 0%, #fff 100%); }
+        .card .value { font-size: 1.75rem; font-weight: 700; color: #1e3a5f; margin: 4px 0; }
+        .card .label { font-size: 0.9rem; color: #4a5568; }
+        .card .change { font-size: 0.8rem; color: #3182ce; margin-top: 4px; }
+        .card .icon-wrap { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .card.green .icon-wrap { background: #bee3f8; }
+        .card.orange .icon-wrap { background: #90cdf4; }
+        .card.blue .icon-wrap { background: #63b3ed; }
+        .card.red .icon-wrap { background: #4299e1; }
+        /* Table section */
+        .table-section { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(30,58,95,0.08); padding: 20px; margin-bottom: 24px; border: 1px solid rgba(49,130,206,0.12); }
+        .table-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .table-title { font-size: 1rem; font-weight: 600; color: #1e3a5f; }
+        .table-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .table-controls select { padding: 6px 10px; border: 1px solid #bee3f8; border-radius: 6px; font-size: 0.875rem; background: #fff; color: #1e3a5f; }
+        .table-controls .view-toggle { display: flex; border: 1px solid #bee3f8; border-radius: 6px; overflow: hidden; }
+        .table-controls .view-toggle button { padding: 6px 12px; border: none; background: #fff; cursor: pointer; font-size: 0.875rem; color: #1e3a5f; }
+        .table-controls .view-toggle button.active { background: #ebf8ff; color: #2b6cb0; font-weight: 500; }
+        .btn-export { padding: 8px 16px; background: #3182ce; color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; font-weight: 500; }
+        .btn-export:hover { background: #2b6cb0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #ebf8ff; color: #1e3a5f; font-weight: 600; }
+        tr:hover { background: #ebf8ff; }
+        .plate-img { width: 80px; height: 44px; background: #ebf8ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #2b6cb0; font-size: 0.75rem; }
+        /* QR section */
+        .qr-section { display: flex; align-items: center; gap: 20px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(30,58,95,0.08); max-width: 380px; border: 1px solid rgba(49,130,206,0.12); }
+        .qr-section .qr { width: 120px; height: 120px; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #2b6cb0; flex-shrink: 0; }
+        .qr-section .qr-text { font-size: 0.9rem; color: #1e3a5f; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="inner">
+            <h1 class="title">ANPR Dashboard</h1>
+            <div class="right">
+                <a href="#" class="btn btn-ghost">Entry Gate System</a>
+                <a href="#" class="btn btn-green">Help & Support</a>
+                <div class="user">
+                    <span>Hi, Viren</span>
+                    <div class="user-avatar">V</div>
+                </div>
+                <div class="notif" title="Notifications">🔔<span class="badge"></span></div>
+            </div>
+        </div>
+    </header>
+    <div class="page">
+        <section class="cards">
+            <div class="card green">
+                <div>
+                    <div class="label">ANPR Cameras</div>
+                    <div class="value" id="stat-cameras">23</div>
+                    <div class="change">Increase by 60%</div>
+                </div>
+                <div class="icon-wrap">📷</div>
+            </div>
+            <div class="card orange">
+                <div>
+                    <div class="label">Total plates today</div>
+                    <div class="value" id="stat-today">56</div>
+                    <div class="change">Increase by 10%</div>
+                </div>
+                <div class="icon-wrap">🚗</div>
+            </div>
+            <div class="card blue">
+                <div>
+                    <div class="label">Total plates this week</div>
+                    <div class="value" id="stat-week">500</div>
+                    <div class="change">Increase by 60%</div>
+                </div>
+                <div class="icon-wrap">📊</div>
+            </div>
+            <div class="card red">
+                <div>
+                    <div class="label">Sites</div>
+                    <div class="value" id="stat-sites">2</div>
+                    <div class="change">Increase by 200%</div>
+                </div>
+                <div class="icon-wrap">🏢</div>
+            </div>
+        </section>
+        <section class="table-section">
+            <div class="table-header">
+                <span class="table-title" id="record-count">0 records</span>
+            </div>
+            <div style="overflow: auto; max-height: 70vh;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.no</th>
+                            <th>Plate No.</th>
+                            <th>Raw text</th>
+                            <th>Confidence</th>
+                            <th>OCR engine</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Frame coords</th>
+                            <th>Vehicle coords</th>
+                            <th>Vehicle confidence</th>
+                            <th>Vehicle class</th>
+                            <th>Plate type</th>
+                            <th>Image saved</th>
+                            <th>Created at</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr><td colspan="15" style="text-align:center;padding:24px;">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="pagination-wrap" class="pagination-wrap" style="display:flex;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0;">
+                <span id="pagination-info" class="pagination-info" style="font-size:0.875rem;color:#4a5568;"></span>
+            </div>
+        </section>
+    </div>
+    <script>
+        var API = window.location.origin;
+
+        function formatDate(iso) {
+            if (!iso) return '—';
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return '—';
+            var day = ('0' + d.getDate()).slice(-2);
+            var month = d.getMonth() + 1;
+            var year = ('' + d.getFullYear()).slice(-2);
+            return day + '.' + month + '.' + year;
+        }
+        function formatTime(iso) {
+            if (!iso) return '—';
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return '—';
+            return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+        }
+        function formatCoords(obj) {
+            if (!obj || typeof obj !== 'object') return '—';
+            var x1 = obj.x1 != null ? obj.x1 : '—';
+            var y1 = obj.y1 != null ? obj.y1 : '—';
+            var x2 = obj.x2 != null ? obj.x2 : '—';
+            var y2 = obj.y2 != null ? obj.y2 : '—';
+            return 'x1:' + x1 + ' y1:' + y1 + ' x2:' + x2 + ' y2:' + y2;
+        }
+        function formatDateTime(iso) {
+            if (!iso) return '—';
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return '—';
+            return formatDate(iso) + ' ' + formatTime(iso);
+        }
+
+        function loadStats() {
+            fetch(API + '/api/stats')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    document.getElementById('stat-cameras').textContent = data.cameras || '—';
+                    document.getElementById('stat-today').textContent = data.today != null ? data.today : '—';
+                    document.getElementById('stat-week').textContent = data.week != null ? data.week : '—';
+                    document.getElementById('stat-sites').textContent = data.sites || '—';
+                })
+                .catch(function() {
+                    document.getElementById('stat-cameras').textContent = '—';
+                    document.getElementById('stat-today').textContent = '—';
+                    document.getElementById('stat-week').textContent = '—';
+                    document.getElementById('stat-sites').textContent = '—';
+                });
+        }
+
+        function loadPlates() {
+            var url = API + '/api/plates?limit=all&page=1&sort=date-desc';
+            document.getElementById('table-body').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">Loading…</td></tr>';
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var total = data.total != null ? data.total : 0;
+                    document.getElementById('record-count').textContent = total.toLocaleString() + ' records';
+                    var tbody = document.getElementById('table-body');
+                    if (!data.items || data.items.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">No records</td></tr>';
+                        updatePagination(0);
+                        return;
+                    }
+                    tbody.innerHTML = data.items.map(function(row, i) {
+                        var date = formatDate(row.timestamp || row.created_at);
+                        var time = formatTime(row.timestamp || row.created_at);
+                        var confidence = row.confidence != null ? (Math.round(row.confidence * 10000) / 100) + '%' : '—';
+                        var vConf = row.vehicle_confidence != null ? (Math.round(row.vehicle_confidence * 10000) / 100) + '%' : '—';
+                        var imgHtml = row.image_saved
+                            ? '<img src="' + API + '/api/plates/' + row.id + '/image/img" alt="Plate" class="plate-img" style="width:80px;height:44px;object-fit:contain;border-radius:6px;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="plate-img" style="display:none;">Plate</div>'
+                            : '<div class="plate-img">—</div>';
+                        return '<tr><td>' + (i + 1) + '</td><td>' + (row.plate_number || '—') + '</td><td>' + (row.raw_text || '—') + '</td><td>' + confidence + '</td><td>' + (row.ocr_engine || '—') + '</td><td>' + date + '</td><td>' + time + '</td><td>' + formatCoords(row.frame_coords) + '</td><td>' + formatCoords(row.vehicle_coords) + '</td><td>' + vConf + '</td><td>' + (row.vehicle_class != null ? row.vehicle_class : '—') + '</td><td>' + (row.plate_type || '—') + '</td><td>' + (row.image_saved ? 'Yes' : 'No') + '</td><td>' + formatDateTime(row.created_at) + '</td><td>' + imgHtml + '</td></tr>';
+                    }).join('');
+                    updatePagination(total);
+                })
+                .catch(function() {
+                    document.getElementById('table-body').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">Error loading data.</td></tr>';
+                    updatePagination(0);
+                });
+        }
+
+        function updatePagination(total) {
+            document.getElementById('pagination-info').textContent = 'Showing all ' + total.toLocaleString() + ' records';
+        }
+
+        loadStats();
+        loadPlates();
+    </script>
+</body>
+</html>
