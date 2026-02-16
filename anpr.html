@@ -51,8 +51,32 @@
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background: #ebf8ff; color: #1e3a5f; font-weight: 600; }
+        th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.sortable:hover { color: #2b6cb0; }
+        th .sort-arrow { margin-left: 4px; opacity: 0.5; font-size: 0.75em; }
+        th.sort-asc .sort-arrow, th.sort-desc .sort-arrow { opacity: 1; color: #2b6cb0; }
         tr:hover { background: #ebf8ff; }
         .plate-img { width: 80px; height: 44px; background: #ebf8ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #2b6cb0; font-size: 0.75rem; }
+        .search-common { margin-bottom: 12px; }
+        .search-common input { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid #bee3f8; border-radius: 6px; font-size: 0.9rem; }
+        .search-common input::placeholder { color: #718096; }
+        .filter-row th { padding: 6px 8px; vertical-align: middle; }
+        .filter-row input { width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem; }
+        .export-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; padding: 12px 0; border-top: 1px solid #e2e8f0; }
+        .export-bar label { font-size: 0.875rem; color: #4a5568; }
+        .export-bar input[type="datetime-local"] { padding: 6px 10px; border: 1px solid #bee3f8; border-radius: 6px; font-size: 0.875rem; }
+        .btn-export-excel { padding: 8px 16px; background: #2f855a; color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; font-weight: 500; }
+        .btn-export-excel:hover { background: #276749; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(30,58,95,0.4); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; border-radius: 12px; padding: 24px; min-width: 320px; max-width: 90vw; box-shadow: 0 8px 32px rgba(30,58,95,0.2); border: 1px solid rgba(49,130,206,0.2); }
+        .modal-box h2 { margin: 0 0 20px; font-size: 1.15rem; color: #1e3a5f; }
+        .modal-box .field { margin-bottom: 16px; }
+        .modal-box .field label { display: block; font-size: 0.875rem; color: #4a5568; margin-bottom: 6px; }
+        .modal-box .field input[type="datetime-local"] { width: 100%; padding: 8px 12px; border: 1px solid #bee3f8; border-radius: 6px; font-size: 0.9rem; }
+        .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .modal-box .btn-cancel { padding: 8px 16px; background: #e2e8f0; color: #1e3a5f; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; }
+        .modal-box .btn-cancel:hover { background: #cbd5e0; }
         /* QR section */
         .qr-section { display: flex; align-items: center; gap: 20px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(30,58,95,0.08); max-width: 380px; border: 1px solid rgba(49,130,206,0.12); }
         .qr-section .qr { width: 120px; height: 120px; background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #2b6cb0; flex-shrink: 0; }
@@ -64,23 +88,34 @@
         <div class="inner">
             <h1 class="title">ANPR Dashboard</h1>
             <div class="right">
-                <a href="#" class="btn btn-ghost">Entry Gate System</a>
-                <a href="#" class="btn btn-green">Help & Support</a>
-                <div class="user">
-                    <span>Hi, Viren</span>
-                    <div class="user-avatar">V</div>
-                </div>
-                <div class="notif" title="Notifications">🔔<span class="badge"></span></div>
+                <button type="button" class="btn btn-ghost" id="header-export-btn">Export</button>
             </div>
         </div>
     </header>
+    <div class="modal-overlay" id="export-modal" aria-hidden="true">
+        <div class="modal-box">
+            <h2>Export to Excel</h2>
+            <div class="field">
+                <label for="export-from">From (date & time)</label>
+                <input type="datetime-local" id="export-from" />
+            </div>
+            <div class="field">
+                <label for="export-to">To (date & time)</label>
+                <input type="datetime-local" id="export-to" />
+            </div>
+            <div class="actions">
+                <button type="button" class="btn-cancel" id="export-modal-cancel">Cancel</button>
+                <button type="button" class="btn-export-excel" id="btn-export-excel">Export to Excel</button>
+            </div>
+        </div>
+    </div>
     <div class="page">
-        <section class="cards">
+        <!-- <section class="cards">
             <div class="card green">
                 <div>
                     <div class="label">ANPR Cameras</div>
                     <div class="value" id="stat-cameras">23</div>
-                    <div class="change">Increase by 60%</div>
+                   
                 </div>
                 <div class="icon-wrap">📷</div>
             </div>
@@ -88,7 +123,7 @@
                 <div>
                     <div class="label">Total plates today</div>
                     <div class="value" id="stat-today">56</div>
-                    <div class="change">Increase by 10%</div>
+   
                 </div>
                 <div class="icon-wrap">🚗</div>
             </div>
@@ -96,7 +131,6 @@
                 <div>
                     <div class="label">Total plates this week</div>
                     <div class="value" id="stat-week">500</div>
-                    <div class="change">Increase by 60%</div>
                 </div>
                 <div class="icon-wrap">📊</div>
             </div>
@@ -104,42 +138,43 @@
                 <div>
                     <div class="label">Sites</div>
                     <div class="value" id="stat-sites">2</div>
-                    <div class="change">Increase by 200%</div>
                 </div>
                 <div class="icon-wrap">🏢</div>
             </div>
-        </section>
+        </section> -->
         <section class="table-section">
             <div class="table-header">
                 <span class="table-title" id="record-count">0 records</span>
+            </div>
+            <div class="search-common">
+                <input type="text" id="search-all" placeholder="Search across all fields…" autocomplete="off" />
             </div>
             <div style="overflow: auto; max-height: 70vh;">
                 <table>
                     <thead>
                         <tr>
-                            <th>S.no</th>
-                            <th>Plate No.</th>
-                            <th>Raw text</th>
-                            <th>Confidence</th>
-                            <th>OCR engine</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Frame coords</th>
-                            <th>Vehicle coords</th>
-                            <th>Vehicle confidence</th>
-                            <th>Vehicle class</th>
-                            <th>Plate type</th>
-                            <th>Image saved</th>
-                            <th>Created at</th>
+                            <th class="sortable" data-sort="sno" title="Sort by S.no">S.no <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="plate_number" title="Sort by Plate No.">Plate No. <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="plate_type" title="Sort by Plate type">Plate type <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="date" title="Sort by Date (latest first by default)">Date <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="timestamp" title="Sort by Time">Time stamp <span class="sort-arrow"></span></th>
                             <th>Image</th>
+                        </tr>
+                        <tr class="filter-row">
+                            <th><input type="text" id="filter-sno" placeholder="S.no" /></th>
+                            <th><input type="text" id="filter-plate_number" placeholder="Plate No." /></th>
+                            <th><input type="text" id="filter-plate_type" placeholder="Plate type" /></th>
+                            <th><input type="text" id="filter-date" placeholder="Date" /></th>
+                            <th><input type="text" id="filter-timestamp" placeholder="Time" /></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <tr><td colspan="15" style="text-align:center;padding:24px;">Loading…</td></tr>
+                        <tr><td colspan="6" style="text-align:center;padding:24px;">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
-            <div id="pagination-wrap" class="pagination-wrap" style="display:flex;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0;">
+            <div id="pagination-wrap" class="pagination-wrap" style="display:flex;align-items:center;margin-top:12px;">
                 <span id="pagination-info" class="pagination-info" style="font-size:0.875rem;color:#4a5568;"></span>
             </div>
         </section>
@@ -151,32 +186,17 @@
             if (!iso) return '—';
             var d = new Date(iso);
             if (isNaN(d.getTime())) return '—';
-            var day = ('0' + d.getDate()).slice(-2);
-            var month = d.getMonth() + 1;
-            var year = ('' + d.getFullYear()).slice(-2);
+            var day = ('0' + d.getUTCDate()).slice(-2);
+            var month = d.getUTCMonth() + 1;
+            var year = ('' + d.getUTCFullYear()).slice(-2);
             return day + '.' + month + '.' + year;
         }
         function formatTime(iso) {
             if (!iso) return '—';
             var d = new Date(iso);
             if (isNaN(d.getTime())) return '—';
-            return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2);
+            return ('0' + d.getUTCHours()).slice(-2) + ':' + ('0' + d.getUTCMinutes()).slice(-2) + ':' + ('0' + d.getUTCSeconds()).slice(-2);
         }
-        function formatCoords(obj) {
-            if (!obj || typeof obj !== 'object') return '—';
-            var x1 = obj.x1 != null ? obj.x1 : '—';
-            var y1 = obj.y1 != null ? obj.y1 : '—';
-            var x2 = obj.x2 != null ? obj.x2 : '—';
-            var y2 = obj.y2 != null ? obj.y2 : '—';
-            return 'x1:' + x1 + ' y1:' + y1 + ' x2:' + x2 + ' y2:' + y2;
-        }
-        function formatDateTime(iso) {
-            if (!iso) return '—';
-            var d = new Date(iso);
-            if (isNaN(d.getTime())) return '—';
-            return formatDate(iso) + ' ' + formatTime(iso);
-        }
-
         function loadStats() {
             fetch(API + '/api/stats')
                 .then(function(r) { return r.json(); })
@@ -194,41 +214,243 @@
                 });
         }
 
+        var allData = [];
+        var sortKey = 'date';
+        var sortDir = 'desc';
+        var imageCache = new Map();
+
+        function getCommonSearchVal() { return (document.getElementById('search-all') && document.getElementById('search-all').value) || ''; }
+        function getColumnFilter(col) {
+            var el = document.getElementById('filter-' + col);
+            return (el && el.value) || '';
+        }
+        function rowToSearchText(row) {
+            var date = formatDate(row.timestamp || row.created_at);
+            var time = formatTime(row.timestamp || row.created_at);
+            return [ (row.plate_number || ''), (row.plate_type || ''), date, time ].join(' ');
+        }
+        function getFilteredData(optFrom, optTo) {
+            var list = allData;
+            var common = getCommonSearchVal().trim().toLowerCase();
+            if (common) {
+                list = list.filter(function(row) { return rowToSearchText(row).toLowerCase().indexOf(common) !== -1; });
+            }
+            var fPlate = getColumnFilter('plate_number').trim().toLowerCase();
+            var fType = getColumnFilter('plate_type').trim().toLowerCase();
+            var fDate = getColumnFilter('date').trim().toLowerCase();
+            var fTime = getColumnFilter('timestamp').trim().toLowerCase();
+            if (fPlate) list = list.filter(function(row) { return (row.plate_number || '').toLowerCase().indexOf(fPlate) !== -1; });
+            if (fType) list = list.filter(function(row) { return (row.plate_type || '').toLowerCase().indexOf(fType) !== -1; });
+            if (fDate) list = list.filter(function(row) { return formatDate(row.timestamp || row.created_at).toLowerCase().indexOf(fDate) !== -1; });
+            if (fTime) list = list.filter(function(row) { return formatTime(row.timestamp || row.created_at).toLowerCase().indexOf(fTime) !== -1; });
+            if (optFrom != null || optTo != null) {
+                list = list.filter(function(row) {
+                    var t = row.timestamp || row.created_at;
+                    if (!t) return false;
+                    var ms = new Date(t).getTime();
+                    if (optFrom != null && ms < optFrom) return false;
+                    if (optTo != null && ms > optTo) return false;
+                    return true;
+                });
+            }
+            return list;
+        }
+
+        function getSortValue(row, key) {
+            if (key === 'date' || key === 'timestamp') {
+                var t = row.timestamp || row.created_at;
+                return t ? new Date(t).getTime() : 0;
+            }
+            if (key === 'plate_number') return (row.plate_number || '').toLowerCase();
+            if (key === 'plate_type') return (row.plate_type || '').toLowerCase();
+            if (key === 'sno') return 0;
+            return 0;
+        }
+
+        function sortData(data) {
+            var key = sortKey;
+            var dir = sortDir === 'asc' ? 1 : -1;
+            return data.slice().sort(function(a, b) {
+                var va = getSortValue(a, key);
+                var vb = getSortValue(b, key);
+                if (key === 'plate_number' || key === 'plate_type') {
+                    return dir * (va.localeCompare(vb));
+                }
+                return dir * (va - vb);
+            });
+        }
+
+        function updateArrowHeaders() {
+            document.querySelectorAll('th.sortable').forEach(function(th) {
+                th.classList.remove('sort-asc', 'sort-desc');
+                var arrow = th.querySelector('.sort-arrow');
+                if (arrow && th.getAttribute('data-sort') === sortKey) {
+                    th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+                    arrow.textContent = sortDir === 'asc' ? '↑' : '↓';
+                } else if (arrow) {
+                    arrow.textContent = '↕';
+                }
+            });
+        }
+
+        function renderTable() {
+            var tbody = document.getElementById('table-body');
+            if (allData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;">No records</td></tr>';
+                document.getElementById('record-count').textContent = '0 records';
+                updatePagination(0);
+                return;
+            }
+            var filtered = getFilteredData();
+            var sorted = sortData(filtered);
+            var fSno = getColumnFilter('sno').trim().toLowerCase();
+            if (fSno) sorted = sorted.filter(function(row, i) { return ('' + (i + 1)).toLowerCase().indexOf(fSno) !== -1; });
+            tbody.innerHTML = sorted.map(function(row, i) {
+                var date = formatDate(row.timestamp || row.created_at);
+                var time = formatTime(row.timestamp || row.created_at);
+                var imgHtml = row.image_saved
+                    ? '<img data-src="' + API + '/api/plates/' + row.id + '/image/img" data-plate-id="' + (row.id || '') + '" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Plate" class="plate-img lazy-plate-img" style="width:80px;height:44px;object-fit:contain;border-radius:6px;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="plate-img plate-img-placeholder" style="display:none;">Plate</div>'
+                    : '<div class="plate-img">—</div>';
+                return '<tr><td>' + (i + 1) + '</td><td>' + (row.plate_number || '—') + '</td><td>' + (row.plate_type || '—') + '</td><td>' + date + '</td><td>' + time + '</td><td>' + imgHtml + '</td></tr>';
+            }).join('');
+            var total = allData.length;
+            var shown = sorted.length;
+            document.getElementById('record-count').textContent = total === shown ? total.toLocaleString() + ' records' : shown.toLocaleString() + ' of ' + total.toLocaleString() + ' records';
+            updatePagination(shown);
+            setupLazyPlateImages();
+        }
+
+        function setupLazyPlateImages() {
+            var tbody = document.getElementById('table-body');
+            var imgs = tbody.querySelectorAll('img.lazy-plate-img[data-src]');
+            if (!imgs.length) return;
+            var tableWrap = tbody.closest('table').parentElement;
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (!entry.isIntersecting) return;
+                    var img = entry.target;
+                    var id = img.getAttribute('data-plate-id');
+                    var url = img.getAttribute('data-src');
+                    observer.unobserve(img);
+                    if (!url) return;
+                    if (imageCache.has(id)) {
+                        img.src = imageCache.get(id);
+                        return;
+                    }
+                    fetch(url).then(function(r) { return r.blob(); }).then(function(blob) {
+                        var objectUrl = URL.createObjectURL(blob);
+                        imageCache.set(id, objectUrl);
+                        img.src = objectUrl;
+                    }).catch(function() {
+                        img.style.display = 'none';
+                        if (img.nextElementSibling) img.nextElementSibling.style.display = 'flex';
+                    });
+                });
+            }, { root: tableWrap, rootMargin: '100px', threshold: 0.01 });
+            imgs.forEach(function(img) { observer.observe(img); });
+        }
+
         function loadPlates() {
             var url = API + '/api/plates?limit=all&page=1&sort=date-desc';
-            document.getElementById('table-body').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">Loading…</td></tr>';
+            document.getElementById('table-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;">Loading…</td></tr>';
             fetch(url)
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    var total = data.total != null ? data.total : 0;
-                    document.getElementById('record-count').textContent = total.toLocaleString() + ' records';
-                    var tbody = document.getElementById('table-body');
-                    if (!data.items || data.items.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">No records</td></tr>';
-                        updatePagination(0);
-                        return;
-                    }
-                    tbody.innerHTML = data.items.map(function(row, i) {
-                        var date = formatDate(row.timestamp || row.created_at);
-                        var time = formatTime(row.timestamp || row.created_at);
-                        var confidence = row.confidence != null ? (Math.round(row.confidence * 10000) / 100) + '%' : '—';
-                        var vConf = row.vehicle_confidence != null ? (Math.round(row.vehicle_confidence * 10000) / 100) + '%' : '—';
-                        var imgHtml = row.image_saved
-                            ? '<img src="' + API + '/api/plates/' + row.id + '/image/img" alt="Plate" class="plate-img" style="width:80px;height:44px;object-fit:contain;border-radius:6px;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="plate-img" style="display:none;">Plate</div>'
-                            : '<div class="plate-img">—</div>';
-                        return '<tr><td>' + (i + 1) + '</td><td>' + (row.plate_number || '—') + '</td><td>' + (row.raw_text || '—') + '</td><td>' + confidence + '</td><td>' + (row.ocr_engine || '—') + '</td><td>' + date + '</td><td>' + time + '</td><td>' + formatCoords(row.frame_coords) + '</td><td>' + formatCoords(row.vehicle_coords) + '</td><td>' + vConf + '</td><td>' + (row.vehicle_class != null ? row.vehicle_class : '—') + '</td><td>' + (row.plate_type || '—') + '</td><td>' + (row.image_saved ? 'Yes' : 'No') + '</td><td>' + formatDateTime(row.created_at) + '</td><td>' + imgHtml + '</td></tr>';
-                    }).join('');
-                    updatePagination(total);
+                    allData = data.items || [];
+                    sortKey = 'date';
+                    sortDir = 'desc';
+                    updateArrowHeaders();
+                    renderTable();
                 })
                 .catch(function() {
-                    document.getElementById('table-body').innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;">Error loading data.</td></tr>';
+                    document.getElementById('table-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;">Error loading data.</td></tr>';
                     updatePagination(0);
                 });
         }
 
-        function updatePagination(total) {
-            document.getElementById('pagination-info').textContent = 'Showing all ' + total.toLocaleString() + ' records';
+        function updatePagination(shown) {
+            document.getElementById('pagination-info').textContent = 'Showing all ' + (shown || 0).toLocaleString() + ' records';
         }
+
+        function escapeCsv(val) {
+            var s = (val == null ? '' : val).toString();
+            if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+        function openExportModal() {
+            document.getElementById('export-modal').classList.add('show');
+            document.getElementById('export-modal').setAttribute('aria-hidden', 'false');
+        }
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.remove('show');
+            document.getElementById('export-modal').setAttribute('aria-hidden', 'true');
+        }
+        function exportToExcel() {
+            var fromEl = document.getElementById('export-from');
+            var toEl = document.getElementById('export-to');
+            var fromVal = fromEl && fromEl.value ? fromEl.value.trim() : '';
+            var toVal = toEl && toEl.value ? toEl.value.trim() : '';
+            var fromIso = fromVal ? new Date(fromVal).toISOString() : '';
+            var toIso = toVal ? new Date(toVal).toISOString() : '';
+            var btn = document.getElementById('btn-export-excel');
+            var origText = btn.textContent;
+            btn.textContent = 'Exporting…';
+            btn.disabled = true;
+            var params = new URLSearchParams();
+            if (fromIso) params.set('from', fromIso);
+            if (toIso) params.set('to', toIso);
+            fetch(API + '/api/export/excel?' + params.toString())
+                .then(function(r) {
+                    if (!r.ok) throw new Error('Export failed');
+                    return r.blob();
+                })
+                .then(function(blob) {
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    var fromLabel = fromVal ? fromVal.slice(0, 10) : 'all';
+                    var toLabel = toVal ? toVal.slice(0, 10) : 'all';
+                    a.download = 'anpr_export_' + fromLabel + '_to_' + toLabel + '.xlsx';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    closeExportModal();
+                })
+                .catch(function() {
+                    alert('Export failed. Please try again.');
+                })
+                .finally(function() {
+                    btn.textContent = origText;
+                    btn.disabled = false;
+                });
+        }
+
+        document.getElementById('header-export-btn').addEventListener('click', openExportModal);
+        document.getElementById('export-modal').addEventListener('click', function(e) {
+            if (e.target === document.getElementById('export-modal')) closeExportModal();
+        });
+        document.getElementById('export-modal-cancel').addEventListener('click', closeExportModal);
+        document.getElementById('search-all').addEventListener('input', renderTable);
+        document.getElementById('filter-sno').addEventListener('input', renderTable);
+        document.getElementById('filter-plate_number').addEventListener('input', renderTable);
+        document.getElementById('filter-plate_type').addEventListener('input', renderTable);
+        document.getElementById('filter-date').addEventListener('input', renderTable);
+        document.getElementById('filter-timestamp').addEventListener('input', renderTable);
+        document.getElementById('btn-export-excel').addEventListener('click', exportToExcel);
+
+        document.querySelectorAll('th.sortable').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var key = this.getAttribute('data-sort');
+                if (!key) return;
+                if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                else { sortKey = key; sortDir = key === 'date' || key === 'timestamp' ? 'desc' : 'asc'; }
+                updateArrowHeaders();
+                renderTable();
+            });
+        });
+
+        window.addEventListener('beforeunload', function() {
+            imageCache.forEach(function(url) { URL.revokeObjectURL(url); });
+            imageCache.clear();
+        });
 
         loadStats();
         loadPlates();
